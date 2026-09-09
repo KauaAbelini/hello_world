@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeuApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuApp extends StatelessWidget {
+  const MeuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Distância',
-      home: DistanciaPage(),
+      title: 'Meu Mapa',
+      home: const MapaPage(),
     );
   }
 }
 
-class DistanciaPage extends StatefulWidget {
-  const DistanciaPage({super.key});
+// Página do mapa
+class MapaPage extends StatefulWidget {
+  const MapaPage({super.key});
 
   @override
-  State<DistanciaPage> createState() => _DistanciaPageState();
+  State<MapaPage> createState() => _MapaPageState();
 }
 
-class _DistanciaPageState extends State<DistanciaPage> {
-  double latCasa = -21.44992144952187;
-  double longCasa = -46.99558718046699;
-  String textoExibicao = 'Clique no botão para calcular a distância.';
+class _MapaPageState extends State<MapaPage> {
+  Position? posicao;
 
-  Future<void> calcularDistancia() async {
+  final MapController mapaController = MapController();
+
+  Future<void> buscarLocalizacao() async {
     bool servicoAtivo = await Geolocator.isLocationServiceEnabled();
 
     if (!servicoAtivo) {
@@ -49,62 +52,64 @@ class _DistanciaPageState extends State<DistanciaPage> {
       return;
     }
 
-    Position posicao = await Geolocator.getCurrentPosition();
-
-    double distanciaMetros = Geolocator.distanceBetween(
-      posicao.latitude,
-      posicao.longitude,
-      latCasa,
-      longCasa,
-    );
+    Position novaPosicao = await Geolocator.getCurrentPosition();
 
     setState(() {
-      double distanciaKm = distanciaMetros / 1000;
-      textoExibicao = 'A distância é de ${distanciaKm.toStringAsFixed(2)} km';
+      posicao = novaPosicao;
     });
 
-    print('Distância calculada: $distanciaMetros metros');
+
+      mapaController.move(
+        LatLng(novaPosicao.latitude, novaPosicao.longitude),
+        16,
+      );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    buscarLocalizacao();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.home,
-                size: 80,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Distância entre a escola e minha casa',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Text(
-                textoExibicao,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: calcularDistancia,
-                child: const Text('Calcular distância'),
-              ),
-            ],
+      appBar: AppBar(title: const Text('Meu Mapa')),
+
+      body: FlutterMap(
+        mapController: mapaController,
+        
+        options: const MapOptions(
+          initialCenter: LatLng(
+            -21.458734302408228,
+            -46.99401638348058,
           ),
+          initialZoom: 13,
         ),
-      ),
+
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.mapa_flutter',
+          ),
+
+          if (posicao != null)
+          MarkerLayer(
+            markers:[
+              Marker(
+                point: LatLng(posicao!.latitude, posicao!.longitude),
+                width: 50,
+                height: 50,
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.green,
+                  size: 50,
+                ),
+              )
+            ]
+          )
+        ]
+      )
     );
   }
 }
