@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(
-      const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: MeuApp(),
-      ),
-    );
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MeuApp(),
+    ),
+  );
+}
 
 class Tarefa {
   String titulo;
@@ -70,7 +72,8 @@ class MeuApp extends StatefulWidget {
 class _MeuAppState extends State<MeuApp> {
   int _abaInferior = 0;
 
-  final Color corPrincipal = const Color.fromARGB(255, 39, 126, 176);
+  final Color corPrincipal =
+      const Color.fromARGB(255, 39, 126, 176);
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -122,11 +125,14 @@ class _MeuAppState extends State<MeuApp> {
   Future<void> _tocarSom() async {
     try {
       await _audioPlayer.stop();
+
       await _audioPlayer.play(
-        AssetSource('fah.mp3'),
+        AssetSource('audio/fah.mp3'),
       );
+
+      debugPrint('SOM TOCADO COM SUCESSO');
     } catch (e) {
-      debugPrint('Erro ao tocar áudio: $e');
+      debugPrint('ERRO NO AUDIO: $e');
     }
   }
 
@@ -172,16 +178,16 @@ class _MeuAppState extends State<MeuApp> {
                   DropdownButtonFormField<String>(
                     value: diaSelecionado,
                     items: const [
-                      DropdownMenuItem<String>(
+                      DropdownMenuItem(
                         value: 'Hoje',
                         child: Text('Hoje'),
                       ),
-                      DropdownMenuItem<String>(
+                      DropdownMenuItem(
                         value: 'Amanhã',
                         child: Text('Amanhã'),
                       ),
                     ],
-                    onChanged: (String? valor) {
+                    onChanged: (valor) {
                       if (valor != null) {
                         setStateDialog(() {
                           diaSelecionado = valor;
@@ -198,15 +204,17 @@ class _MeuAppState extends State<MeuApp> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    _tocarSom();
                     Navigator.pop(dialogContext);
                   },
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final titulo = tituloController.text.trim();
-                    final horario = horarioController.text.trim();
+                    final titulo =
+                        tituloController.text.trim();
+
+                    final horario =
+                        horarioController.text.trim();
 
                     if (titulo.isEmpty) return;
 
@@ -214,18 +222,21 @@ class _MeuAppState extends State<MeuApp> {
                       tarefas.add(
                         Tarefa(
                           titulo: titulo,
-                          horario: horario.isEmpty ? '--:--' : horario,
+                          horario: horario.isEmpty
+                              ? '--:--'
+                              : horario,
                           dia: diaSelecionado,
-                          corLateral: diaSelecionado == 'Hoje'
-                              ? Colors.blue
-                              : const Color(0xFF2C3E50),
+                          corLateral:
+                              diaSelecionado == 'Hoje'
+                                  ? Colors.blue
+                                  : const Color(0xFF2C3E50),
                         ),
                       );
                     });
 
-                    _tocarSom();
-
                     Navigator.pop(dialogContext);
+
+                    _tocarSom();
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -277,7 +288,9 @@ class _MeuAppState extends State<MeuApp> {
 
   Widget _construirCardTarefa(Tarefa tarefa) {
     final corDaBarra =
-        tarefa.concluida ? Colors.green : tarefa.corLateral;
+        tarefa.concluida
+            ? Colors.green
+            : tarefa.corLateral;
 
     return Dismissible(
       key: Key(
@@ -319,7 +332,8 @@ class _MeuAppState extends State<MeuApp> {
               ),
             ),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding:
+                  const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 4,
               ),
@@ -357,19 +371,22 @@ class _MeuAppState extends State<MeuApp> {
                   ),
                   onChanged: (valor) {
                     setState(() {
-                      tarefa.concluida = valor ?? false;
+                      tarefa.concluida =
+                          valor ?? false;
                     });
 
                     _tocarSom();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
                       SnackBar(
                         content: Text(
                           tarefa.concluida
                               ? 'Tarefa concluída!'
                               : 'Tarefa marcada como pendente.',
                         ),
-                        duration: const Duration(
+                        duration:
+                            const Duration(
                           milliseconds: 1200,
                         ),
                       ),
@@ -405,26 +422,34 @@ class _MeuAppState extends State<MeuApp> {
         )
         .toList();
 
-    final tarefasConcluidas =
-        tarefas.where((t) => t.concluida).toList();
+    final tarefasConcluidas = tarefas
+        .where(
+          (t) => t.concluida,
+        )
+        .toList();
 
     final existeTarefa =
-        (mostrarHoje && tarefasHoje.isNotEmpty) ||
-        (mostrarAmanha && tarefasAmanha.isNotEmpty) ||
-        (mostrarConcluidas && tarefasConcluidas.isNotEmpty);
+        (mostrarHoje &&
+                tarefasHoje.isNotEmpty) ||
+            (mostrarAmanha &&
+                tarefasAmanha.isNotEmpty) ||
+            (mostrarConcluidas &&
+                tarefasConcluidas.isNotEmpty);
 
     return ListView(
       padding: const EdgeInsets.only(
         bottom: 80,
       ),
       children: [
-        if (mostrarHoje && tarefasHoje.isNotEmpty) ...[
+        if (mostrarHoje &&
+            tarefasHoje.isNotEmpty) ...[
           _construirCabecalhoSecao('Hoje'),
           ...tarefasHoje.map(
             (t) => _construirCardTarefa(t),
           ),
         ],
-        if (mostrarAmanha && tarefasAmanha.isNotEmpty) ...[
+        if (mostrarAmanha &&
+            tarefasAmanha.isNotEmpty) ...[
           _construirCabecalhoSecao('Amanhã'),
           ...tarefasAmanha.map(
             (t) => _construirCardTarefa(t),
@@ -468,189 +493,193 @@ class _MeuAppState extends State<MeuApp> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
-      child: Builder(
-        builder: (context) {
-          return Scaffold(
-            backgroundColor: Colors.grey.shade50,
-            appBar: AppBar(
-              title: const Text('Minhas Tarefas'),
-              centerTitle: true,
-              backgroundColor: corPrincipal,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.add,
-                    size: 28,
-                  ),
-                  onPressed: adicionarTarefa,
-                ),
-              ],
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: const Text('Minhas Tarefas'),
+          centerTitle: true,
+          backgroundColor: corPrincipal,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.add,
+                size: 28,
+              ),
+              onPressed: adicionarTarefa,
             ),
-            drawer: Drawer(
-              child: ListView(
-                padding: EdgeInsets.zero,
+          ],
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: corPrincipal,
+                ),
+                child: const Text(
+                  'Tarefas 📝',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.task),
+                title: const Text('Minhas Tarefas'),
+                onTap: () {
+                  _tocarSom();
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Configurações'),
+                onTap: () {
+                  _tocarSom();
+
+                  Navigator.pop(context);
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const TelaConfiguracoes(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.help),
+                title: const Text('Ajuda'),
+                onTap: () {
+                  _tocarSom();
+
+                  Navigator.pop(context);
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const TelaAjuda(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                labelColor: corPrincipal,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: corPrincipal,
+                indicatorWeight: 3,
+                onTap: (index) {
+                  _tocarSom();
+
+                  if (index == 0) {
+                    _mostrarMensagem(
+                      'Todas as tarefas',
+                    );
+                  } else if (index == 1) {
+                    _mostrarMensagem(
+                      'Tarefas pendentes',
+                    );
+                  } else {
+                    _mostrarMensagem(
+                      'Tarefas concluídas',
+                    );
+                  }
+                },
+                tabs: const [
+                  Tab(text: 'Todas'),
+                  Tab(text: 'Pendentes'),
+                  Tab(text: 'Concluídas'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
                 children: [
-                  DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: corPrincipal,
-                    ),
-                    child: const Text(
-                      'Tarefas 📝',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                      ),
-                    ),
+                  _construirListaFiltrada(
+                    true,
+                    true,
+                    true,
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.task),
-                    title: const Text('Minhas Tarefas'),
-                    onTap: () {
-                      _tocarSom();
-                      Navigator.pop(context);
-                    },
+                  _construirListaFiltrada(
+                    true,
+                    true,
+                    false,
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.settings),
-                    title: const Text('Configurações'),
-                    onTap: () {
-                      _tocarSom();
-                      Navigator.pop(context);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const TelaConfiguracoes(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.help),
-                    title: const Text('Ajuda'),
-                    onTap: () {
-                      _tocarSom();
-                      Navigator.pop(context);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const TelaAjuda(),
-                        ),
-                      );
-                    },
+                  _construirListaFiltrada(
+                    false,
+                    false,
+                    true,
                   ),
                 ],
               ),
             ),
-            body: Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  child: TabBar(
-                    labelColor: corPrincipal,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: corPrincipal,
-                    indicatorWeight: 3,
-                    onTap: (index) {
-                      _tocarSom();
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _abaInferior,
+          selectedItemColor: corPrincipal,
+          unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            setState(() {
+              _abaInferior = index;
+            });
 
-                      if (index == 0) {
-                        _mostrarMensagem('Todas as tarefas');
-                      } else if (index == 1) {
-                        _mostrarMensagem('Tarefas pendentes');
-                      } else {
-                        _mostrarMensagem('Tarefas concluídas');
-                      }
-                    },
-                    tabs: const [
-                      Tab(
-                        text: 'Todas',
-                      ),
-                      Tab(
-                        text: 'Pendentes',
-                      ),
-                      Tab(
-                        text: 'Concluídas',
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _construirListaFiltrada(
-                        true,
-                        true,
-                        true,
-                      ),
-                      _construirListaFiltrada(
-                        true,
-                        true,
-                        false,
-                      ),
-                      _construirListaFiltrada(
-                        false,
-                        false,
-                        true,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            _tocarSom();
+
+            switch (index) {
+              case 0:
+                _mostrarMensagem('Tarefas');
+                break;
+              case 1:
+                _mostrarMensagem('Calendário');
+                break;
+              case 2:
+                _mostrarMensagem('Prioridades');
+                break;
+              case 3:
+                _mostrarMensagem('Perfil');
+                break;
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.task),
+              label: 'Tarefas',
             ),
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _abaInferior,
-              selectedItemColor: corPrincipal,
-              unselectedItemColor: Colors.grey,
-              type: BottomNavigationBarType.fixed,
-              onTap: (index) {
-                setState(() {
-                  _abaInferior = index;
-                });
-
-                _tocarSom();
-
-                switch (index) {
-                  case 0:
-                    _mostrarMensagem('Tarefas');
-                    break;
-                  case 1:
-                    _mostrarMensagem('Calendário');
-                    break;
-                  case 2:
-                    _mostrarMensagem('Prioridades');
-                    break;
-                  case 3:
-                    _mostrarMensagem('Perfil');
-                    break;
-                }
-              },
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.task),
-                  label: 'Tarefas',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_today),
-                  label: 'Calendário',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.star),
-                  label: 'Prioridades',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person),
-                  label: 'Perfil',
-                ),
-              ],
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Calendário',
             ),
-          );
-        },
+            BottomNavigationBarItem(
+              icon: Icon(Icons.star),
+              label: 'Prioridades',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: corPrincipal,
+          foregroundColor: Colors.white,
+          onPressed: _tocarSom,
+          child: const Icon(Icons.volume_up),
+        ),
       ),
     );
   }
