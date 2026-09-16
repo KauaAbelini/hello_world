@@ -37,6 +37,8 @@ dependencies:
   geolocator: ^14.0.3
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
+  sensors_plus: ^7.1.0
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +56,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/audio/fah.mp3
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
