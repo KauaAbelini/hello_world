@@ -39,6 +39,7 @@ dependencies:
   latlong2: ^0.10.1
   sensors_plus: ^7.1.0
   audioplayers: ^6.8.1
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:
