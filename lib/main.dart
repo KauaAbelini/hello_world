@@ -1,133 +1,235 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
+import 'tarefa.dart';
+import 'database_helper.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeuAplicativo());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuAplicativo extends StatelessWidget {
+  const MeuAplicativo({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: const BluetoothPage());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Tarefas',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const TarefasPage(),
+    );
   }
 }
 
-class BluetoothPage extends StatefulWidget {
-  const BluetoothPage({super.key});
+class TarefasPage extends StatefulWidget {
+  const TarefasPage({super.key});
 
   @override
-  State<BluetoothPage> createState() => _BluetoothPageState();
+  State<TarefasPage> createState() => _TarefasPageState();
 }
 
+class _TarefasPageState extends State<TarefasPage> {
+  final DatabaseHelper dbHelper = DatabaseHelper();
 
-class _BluetoothPageState extends State<BluetoothPage> {
-  List<ScanResult> devices = [];
-  String status = 'Toque em Buscar';
+  final TextEditingController descricaoController = TextEditingController();
 
-  Future<void> buscar() async {
-    // Verifica se o Bluetooth está ligado
-    if (FlutterBluePlus.adapterStateNow != BluetoothAdapterState.on) {
-      setState(() {
-        status = 'Ligando Bluetooth...';
-      });
+  String prioridadeSelecionada = 'Média';
 
-      try {
-        await FlutterBluePlus.turnOn();
-      } catch (e) {
-        setState(() {
-          status = 'Não foi possível ligar o Bluetooth';
-        });
+  List<Tarefa> tarefas = [];
 
-        print('Erro ao ligar Bluetooth: $e');
-        return;
-      }
-    }
-    setState(() {
-      devices = [];
-      status = 'Buscando...';
-    });
+  @override
+  void initState() {
+    super.initState();
 
-    // Recebe os dispositivos encontrados
-    FlutterBluePlus.scanResults.listen((resultados) {
-      setState(() {
-        devices = resultados;
-      });
-    });
+    carregarTarefas();
+  }
 
-    // Procura por 5 segundos
-    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+  // READ
+  Future<void> carregarTarefas() async {
+    final resultado = await dbHelper.listarTarefas();
 
     setState(() {
-      status = 'Busca finalizada';
+      tarefas = resultado;
     });
   }
 
-  Future<void> conectar(BluetoothDevice device) async {
+  // CREATE
+  Future<void> adicionarTarefa() async {
+    final descricao = descricaoController.text.trim();
+
+    if (descricao.isEmpty) {
+      return;
+    }
+
+    final tarefa = Tarefa(
+      descricao: descricao,
+      prioridade: prioridadeSelecionada,
+      status: 'Pendente',
+    );
+
+    await dbHelper.inserirTarefa(tarefa);
+
+    descricaoController.clear();
+
     setState(() {
-      status = 'Conectando...';
+      prioridadeSelecionada = 'Média';
     });
 
-    try {
-      await device.connect(license: License.nonprofit);
+    await carregarTarefas();
+  }
 
-      setState(() {
-        status = 'Conectado!';
-      });
+  // UPDATE
+  Future<void> concluirTarefa(Tarefa tarefa) async {
+    final tarefaAtualizada = Tarefa(
+      id: tarefa.id,
+      descricao: tarefa.descricao,
+      prioridade: tarefa.prioridade,
+      status: 'Concluída',
+    );
 
-      print('Conectado em: ${device.remoteId}');
-    } catch (e) {
-      setState(() {
-        status = 'Erro: $e';
-      });
-    }
+    await dbHelper.atualizarTarefa(tarefaAtualizada);
+
+    await carregarTarefas();
+  }
+
+  // DELETE
+  Future<void> excluirTarefa(int id) async {
+    await dbHelper.excluirTarefa(id);
+
+    await carregarTarefas();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Teste Bluetooth')),
+      appBar: AppBar(title: const Text('Minhas Tarefas')),
 
       body: Column(
         children: [
-          const SizedBox(height: 20),
+          // FORMULÁRIO
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextField(
+                  controller: descricaoController,
+                  decoration: const InputDecoration(
+                    labelText: 'Descrição da tarefa',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
 
-          Text(status),
+                const SizedBox(height: 12),
 
-          const SizedBox(height: 20),
+                DropdownButtonFormField<String>(
+                  value: prioridadeSelecionada,
+                  decoration: const InputDecoration(
+                    labelText: 'Prioridade',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Baixa', child: Text('Baixa')),
+                    DropdownMenuItem(value: 'Média', child: Text('Média')),
+                    DropdownMenuItem(value: 'Alta', child: Text('Alta')),
+                  ],
+                  onChanged: (valor) {
+                    if (valor != null) {
+                      setState(() {
+                        prioridadeSelecionada = valor;
+                      });
+                    }
+                  },
+                ),
 
-          ElevatedButton(
-            onPressed: buscar,
-            child: const Text('Buscar dispositivos'),
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: adicionarTarefa,
+                    child: const Text('ADICIONAR TAREFA'),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 20),
+          const Divider(),
 
+          // LISTAGEM
           Expanded(
-            child: ListView.builder(
-              itemCount: devices.length,
-              itemBuilder: (context, index) {
-                final resultado = devices[index];
+            child: tarefas.isEmpty
+                ? const Center(child: Text('Nenhuma tarefa cadastrada.'))
+                : ListView.builder(
+                    itemCount: tarefas.length,
+                    itemBuilder: (context, index) {
+                      final tarefa = tarefas[index];
 
-                final nome = resultado.advertisementData.advName.isNotEmpty
-                    ? resultado.advertisementData.advName
-                    : 'Sem nome';
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
 
-                return ListTile(
-                  leading: const Icon(Icons.bluetooth),
-                  title: Text(nome),
-                  subtitle: Text(resultado.device.remoteId.toString()),
-                  onTap: () {
-                    conectar(resultado.device);
-                  },
-                );
-              },
-            ),
+                        child: ListTile(
+                          leading: CircleAvatar(child: Text('${tarefa.id}')),
+
+                          title: Text(
+                            tarefa.descricao,
+                            style: TextStyle(
+                              decoration: tarefa.status == 'Concluída'
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+
+                          subtitle: Text(
+                            'Prioridade: ${tarefa.prioridade}\n'
+                            'Status: ${tarefa.status}',
+                          ),
+
+                          isThreeLine: true,
+
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Concluir
+                              if (tarefa.status != 'Concluída')
+                                IconButton(
+                                  icon: const Icon(Icons.check),
+                                  tooltip: 'Concluir',
+                                  onPressed: () {
+                                    concluirTarefa(tarefa);
+                                  },
+                                ),
+
+                              // Excluir
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                tooltip: 'Excluir',
+                                onPressed: () {
+                                  excluirTarefa(tarefa.id!);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
-}
 
+  @override
+  void dispose() {
+    descricaoController.dispose();
+
+    super.dispose();
+  }
+}
